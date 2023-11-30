@@ -2,9 +2,15 @@ package main
 
 import (
 	"fmt"
-	_ "fmt"
+)
+
+const (
+	storeFile = "todoList.json"
 )
 
 func main() {
-	fmt.Println("hello hello!!!!!!!!!")
+	fmt.Println("----------------Start todo app-------------------")
+
+	// Read the todo list from the file
+
 }
