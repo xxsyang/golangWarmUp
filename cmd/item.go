@@ -3,7 +3,9 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
+	"github.com/alexeyco/simpletable"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -108,8 +110,33 @@ func writeToFile(fileName string) error {
 	return os.WriteFile(fileName, data, 8964)
 }
 
-//func printTable(fileName string) {
-//	items, err := readFromFile(fileName)
+func printTable(fileName string) {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignCenter, Text: "Index"},
+			{Align: simpletable.AlignCenter, Text: "Goal"},
+			{Align: simpletable.AlignCenter, Text: "IsDone?"},
+			{Align: simpletable.AlignCenter, Text: "CreateTime"},
+			{Align: simpletable.AlignCenter, Text: "FinishedTime"},
+		},
+	}
+
+	for index, item := range todoList {
+		r := []*simpletable.Cell{
+			{Align: simpletable.AlignCenter, Text: string(rune(index))},
+			{Align: simpletable.AlignCenter, Text: item.goal},
+			{Align: simpletable.AlignCenter, Text: string(strconv.FormatBool(item.isDone))},
+			{Align: simpletable.AlignCenter, Text: item.createTime.String()},
+			{Align: simpletable.AlignCenter, Text: item.finishedTime},
+		}
+		table.Body.Cells = append(table.Body.Cells, r)
+	}
+
+	table.SetStyle(simpletable.StyleCompactLite)
+	table.Println()
+}
+
 //
 //
 //	if err != nil {
