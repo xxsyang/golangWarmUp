@@ -23,9 +23,9 @@ func main() {
 
 	flag.Parse()
 
-	todoList := cmd.TodoList
+	todos := cmd.TodoList{}
 
-	if err, _ := cmd.ReadFromFile(storeFile); err != nil {
+	if err, _ := cmd.ReadFromFile(todos, storeFile); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -41,8 +41,9 @@ func main() {
 			os.Exit(1)
 		}
 
-		cmd.InsertItem(task)
-		err = cmd.WriteToFile(storeFile)
+		cmd.InsertItem(todos, task)
+		fmt.Println("Todo List after insertion:", todos)
+		err = cmd.WriteToFile(todos, storeFile)
 		if err != nil {
 			_, err := fmt.Fprintln(os.Stderr, err.Error())
 			if err != nil {
@@ -52,33 +53,33 @@ func main() {
 		}
 
 	case *complete > 0:
-		var list, err = cmd.MarkDone(*complete)
+		var list, err = cmd.MarkDone(todos, *complete)
 		_ = list
 		if err != nil {
 			//fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		err = cmd.WriteToFile(storeFile)
+		err = cmd.WriteToFile(todos, storeFile)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
 
 	case *del > 0:
-		var list, err = cmd.DeleteItem(*del)
+		var list, err = cmd.DeleteItem(todos, *del)
 		_ = list
 		if err != nil {
 			//fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		err = cmd.WriteToFile(storeFile)
+		err = cmd.WriteToFile(todos, storeFile)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
 
 	case *list:
-		cmd.PrintTable()
+		cmd.PrintTable(todos)
 	default:
 		fmt.Fprintln(os.Stdout, "invalid command")
 		os.Exit(0)

@@ -16,59 +16,61 @@ type item struct {
 	finishedTime string
 }
 
-var TodoList []item
+type TodoList []item
 
-func InsertItem(content string) []item {
+//var TodoList []item
+
+func InsertItem(list TodoList, content string) TodoList {
 	addItem := new(item)
 	addItem.goal = content
 	addItem.isDone = false
 	addItem.createTime = time.Now()
 	addItem.finishedTime = "Not finished yet! Do it right now!!!!!!!!!!!!!!"
 
-	return append(TodoList, *addItem)
+	return append(list, *addItem)
 }
 
-func MarkDone(index int) ([]item, error) {
-	if index < 0 || index > len(TodoList) {
-		return TodoList, errors.New("index out of range")
+func MarkDone(list TodoList, index int) (TodoList, error) {
+	if index < 0 || index > len(list) {
+		return list, errors.New("index out of range")
 	}
 
-	TodoList[index].isDone = true
-	TodoList[index].finishedTime = time.Now().String()
+	list[index].isDone = true
+	list[index].finishedTime = time.Now().String()
 
-	return TodoList, nil
+	return list, nil
 }
 
-func DeleteItem(index int) ([]item, error) {
-	if index < 0 || index > len(TodoList) {
-		return TodoList, errors.New("index out of range")
+func DeleteItem(list TodoList, index int) (TodoList, error) {
+	if index < 0 || index > len(list) {
+		return list, errors.New("index out of range")
 	}
 
-	TodoList = append(TodoList[:index], TodoList[index+1:]...)
+	list = append(list[:index], list[index+1:]...)
 
-	return TodoList, nil
+	return list, nil
 }
 
-func updateItem(index int, content string) ([]item, error) {
-	if index < 0 || index > len(TodoList) {
-		return TodoList, errors.New("index out of range")
+func updateItem(list TodoList, index int, content string) (TodoList, error) {
+	if index < 0 || index > len(list) {
+		return list, errors.New("index out of range")
 	}
 
-	TodoList[index].goal = content
+	list[index].goal = content
 
-	return TodoList, nil
+	return list, nil
 }
 
-func listAll() []item {
-	return TodoList
-}
+//func listAll() TodoList {
+//	return listAll()
+//}
 
-func ReadFromFile(fileName string) ([]item, error) {
+func ReadFromFile(list TodoList, fileName string) (TodoList, error) {
 
 	content, err := os.ReadFile(fileName)
 
 	if err != nil {
-		return TodoList, errors.New("read file error")
+		return list, errors.New("read file error")
 	}
 
 	if fileName == "" {
@@ -80,16 +82,16 @@ func ReadFromFile(fileName string) ([]item, error) {
 	}
 
 	// Unmarshal the JSON data into the todoList variable
-	err = json.Unmarshal(content, &TodoList)
+	err = json.Unmarshal(content, &list)
 	if err != nil {
 		return nil, errors.New("parsing file error")
 	}
 
-	return TodoList, nil
+	return list, nil
 
 }
 
-func WriteToFile(fileName string) error {
+func WriteToFile(list TodoList, fileName string) error {
 	if fileName == "" {
 		return errors.New("file name is empty")
 	}
@@ -102,7 +104,7 @@ func WriteToFile(fileName string) error {
 	//defer file.Close()
 
 	// Marshal the todoList into JSON format
-	data, err := json.Marshal(TodoList)
+	data, err := json.Marshal(list)
 	if err != nil {
 		return errors.New("marshal error")
 	}
@@ -110,7 +112,7 @@ func WriteToFile(fileName string) error {
 	return os.WriteFile(fileName, data, 8964)
 }
 
-func PrintTable() {
+func PrintTable(list TodoList) {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
@@ -124,28 +126,24 @@ func PrintTable() {
 
 	var cells [][]*simpletable.Cell
 
-	for idx, item := range *t {
+	for idx, item := range list {
 		idx++
-		task := blue(item.Task)
+		task := blue(item.goal)
 		done := blue("no")
-		if item.Done {
-			task = green(fmt.Sprintf("\u2705 %s", item.Task))
+		if item.isDone {
+			task = green(fmt.Sprintf("\u2705 %s", item.goal))
 			done = green("yes")
 		}
 		cells = append(cells, *&[]*simpletable.Cell{
 			{Text: fmt.Sprintf("%d", idx)},
 			{Text: task},
 			{Text: done},
-			{Text: item.CreatedAt.Format(time.RFC822)},
-			{Text: item.CompletedAt.Format(time.RFC822)},
+			{Text: item.createTime.Format(time.RFC822)},
+			{Text: item.finishedTime},
 		})
 	}
 
 	table.Body = &simpletable.Body{Cells: cells}
-
-	table.Footer = &simpletable.Footer{Cells: []*simpletable.Cell{
-		{Align: simpletable.AlignCenter, Span: 5, Text: red(fmt.Sprintf("You have %d pending todos", t.CountPending()))},
-	}}
 
 	table.SetStyle(simpletable.StyleUnicode)
 
