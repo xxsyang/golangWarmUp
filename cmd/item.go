@@ -3,9 +3,9 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/alexeyco/simpletable"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -16,59 +16,59 @@ type item struct {
 	finishedTime string
 }
 
-var todoList []item
+var TodoList []item
 
-func insertItem(content string) []item {
+func InsertItem(content string) []item {
 	addItem := new(item)
 	addItem.goal = content
 	addItem.isDone = false
 	addItem.createTime = time.Now()
 	addItem.finishedTime = "Not finished yet! Do it right now!!!!!!!!!!!!!!"
 
-	return append(todoList, *addItem)
+	return append(TodoList, *addItem)
 }
 
-func markDone(index int) ([]item, error) {
-	if index < 0 || index > len(todoList) {
-		return todoList, errors.New("index out of range")
+func MarkDone(index int) ([]item, error) {
+	if index < 0 || index > len(TodoList) {
+		return TodoList, errors.New("index out of range")
 	}
 
-	todoList[index].isDone = true
-	todoList[index].finishedTime = time.Now().String()
+	TodoList[index].isDone = true
+	TodoList[index].finishedTime = time.Now().String()
 
-	return todoList, nil
+	return TodoList, nil
 }
 
-func deleteItem(index int) ([]item, error) {
-	if index < 0 || index > len(todoList) {
-		return todoList, errors.New("index out of range")
+func DeleteItem(index int) ([]item, error) {
+	if index < 0 || index > len(TodoList) {
+		return TodoList, errors.New("index out of range")
 	}
 
-	todoList = append(todoList[:index], todoList[index+1:]...)
+	TodoList = append(TodoList[:index], TodoList[index+1:]...)
 
-	return todoList, nil
+	return TodoList, nil
 }
 
 func updateItem(index int, content string) ([]item, error) {
-	if index < 0 || index > len(todoList) {
-		return todoList, errors.New("index out of range")
+	if index < 0 || index > len(TodoList) {
+		return TodoList, errors.New("index out of range")
 	}
 
-	todoList[index].goal = content
+	TodoList[index].goal = content
 
-	return todoList, nil
+	return TodoList, nil
 }
 
 func listAll() []item {
-	return todoList
+	return TodoList
 }
 
-func readFromFile(fileName string) ([]item, error) {
+func ReadFromFile(fileName string) ([]item, error) {
 
 	content, err := os.ReadFile(fileName)
 
 	if err != nil {
-		return todoList, errors.New("read file error")
+		return TodoList, errors.New("read file error")
 	}
 
 	if fileName == "" {
@@ -80,16 +80,16 @@ func readFromFile(fileName string) ([]item, error) {
 	}
 
 	// Unmarshal the JSON data into the todoList variable
-	err = json.Unmarshal(content, &todoList)
+	err = json.Unmarshal(content, &TodoList)
 	if err != nil {
 		return nil, errors.New("parsing file error")
 	}
 
-	return todoList, nil
+	return TodoList, nil
 
 }
 
-func writeToFile(fileName string) error {
+func WriteToFile(fileName string) error {
 	if fileName == "" {
 		return errors.New("file name is empty")
 	}
@@ -102,7 +102,7 @@ func writeToFile(fileName string) error {
 	//defer file.Close()
 
 	// Marshal the todoList into JSON format
-	data, err := json.Marshal(todoList)
+	data, err := json.Marshal(TodoList)
 	if err != nil {
 		return errors.New("marshal error")
 	}
@@ -110,7 +110,7 @@ func writeToFile(fileName string) error {
 	return os.WriteFile(fileName, data, 8964)
 }
 
-func printTable(fileName string) {
+func PrintTable() {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
@@ -122,18 +122,33 @@ func printTable(fileName string) {
 		},
 	}
 
-	for index, item := range todoList {
-		r := []*simpletable.Cell{
-			{Align: simpletable.AlignCenter, Text: string(rune(index))},
-			{Align: simpletable.AlignCenter, Text: item.goal},
-			{Align: simpletable.AlignCenter, Text: string(strconv.FormatBool(item.isDone))},
-			{Align: simpletable.AlignCenter, Text: item.createTime.String()},
-			{Align: simpletable.AlignCenter, Text: item.finishedTime},
+	var cells [][]*simpletable.Cell
+
+	for idx, item := range *t {
+		idx++
+		task := blue(item.Task)
+		done := blue("no")
+		if item.Done {
+			task = green(fmt.Sprintf("\u2705 %s", item.Task))
+			done = green("yes")
 		}
-		table.Body.Cells = append(table.Body.Cells, r)
+		cells = append(cells, *&[]*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", idx)},
+			{Text: task},
+			{Text: done},
+			{Text: item.CreatedAt.Format(time.RFC822)},
+			{Text: item.CompletedAt.Format(time.RFC822)},
+		})
 	}
 
-	table.SetStyle(simpletable.StyleCompactLite)
+	table.Body = &simpletable.Body{Cells: cells}
+
+	table.Footer = &simpletable.Footer{Cells: []*simpletable.Cell{
+		{Align: simpletable.AlignCenter, Span: 5, Text: red(fmt.Sprintf("You have %d pending todos", t.CountPending()))},
+	}}
+
+	table.SetStyle(simpletable.StyleUnicode)
+
 	table.Println()
 }
 

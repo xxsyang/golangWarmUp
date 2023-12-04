@@ -16,7 +16,6 @@ const (
 )
 
 func main() {
-
 	add := flag.Bool("add", false, "add a new todo")
 	complete := flag.Int("complete", 0, "mark a todo as completed")
 	del := flag.Int("del", 0, "delete a todo")
@@ -24,56 +23,101 @@ func main() {
 
 	flag.Parse()
 
-	todos := &todoList.{}
+	todoList := cmd.TodoList
 
-	if err := todos.Load(todoFile); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+	if err, _ := cmd.ReadFromFile(storeFile); err != nil {
+		fmt.Println(err)
+		return
 	}
 
 	switch {
 	case *add:
-
 		task, err := getInput(os.Stdin, flag.Args()...)
 		if err != nil {
+			_, err := fmt.Fprintln(os.Stderr, err.Error())
+			if err != nil {
+				return
+			}
+			os.Exit(1)
+		}
+
+		cmd.InsertItem(task)
+		err = cmd.WriteToFile(storeFile)
+		if err != nil {
+			_, err := fmt.Fprintln(os.Stderr, err.Error())
+			if err != nil {
+				return
+			}
+			os.Exit(1)
+		}
+
+	case *complete > 0:
+		var list, err = cmd.MarkDone(*complete)
+		_ = list
+		if err != nil {
+			//fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		err = cmd.WriteToFile(storeFile)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
 
-		todos.Add(task)
-		err = todos.Store(todoFile)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-	case *complete > 0:
-		err := todos.Complete(*complete)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-		err = todos.Store(todoFile)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
 	case *del > 0:
-		err := todos.Delete(*del)
+		var list, err = cmd.DeleteItem(*del)
+		_ = list
+		if err != nil {
+			//fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		err = cmd.WriteToFile(storeFile)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		err = todos.Store(todoFile)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
+
 	case *list:
-		todos.Print()
+		cmd.PrintTable()
 	default:
 		fmt.Fprintln(os.Stdout, "invalid command")
 		os.Exit(0)
 	}
+
+	//if *add {
+	//	content, err := getInput(os.Stdin, flag.Args()...)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		return
+	//	}
+	//
+	//	todoList = cmd.InsertItem(content)
+	//	fmt.Println("Todo List after insertion:", todoList)
+	//}
+	//
+	//if *complete != 0 {
+	//	todoList, err := cmd.MarkDone(*complete)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		return
+	//	}
+	//
+	//	fmt.Println("Todo List after completion:", todoList)
+	//}
+	//
+	//if *del != 0 {
+	//	todoList, err := cmd.DeleteItem(*del)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		return
+	//	}
+	//
+	//	fmt.Println("Todo List after deletion:", todoList)
+	//}
+	//
+	//if *list {
+	//	cmd.PrintTable()
+	//}
 
 }
 
