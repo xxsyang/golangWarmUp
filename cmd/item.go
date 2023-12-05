@@ -20,78 +20,87 @@ type TodoList []item
 
 //var TodoList []item
 
-func InsertItem(list TodoList, content string) TodoList {
-	addItem := new(item)
-	addItem.goal = content
-	addItem.isDone = false
-	addItem.createTime = time.Now()
-	addItem.finishedTime = "Not finished yet! Do it right now!!!!!!!!!!!!!!"
+func (ptr *TodoList) InsertItem(content string) {
+	*ptr = append(*ptr,
+		item{
+			content,
+			false,
+			time.Now(),
+			"Not finished yet! Do it right now!!!!!!!!!!!!!!"})
 
-	return append(list, *addItem)
+	fmt.Println("Todo List add successfully!")
 }
 
-func MarkDone(list TodoList, index int) (TodoList, error) {
+func (ptr *TodoList) MarkDone(index int) error {
+	list := *ptr
+
 	if index < 0 || index > len(list) {
-		return list, errors.New("index out of range")
+		return errors.New("index out of range")
 	}
 
 	list[index].isDone = true
+	fmt.Println("Todo List marked as done successfully!")
 	list[index].finishedTime = time.Now().String()
+	fmt.Println("Todo List fish time done successfully!")
 
-	return list, nil
+	return nil
 }
 
-func DeleteItem(list TodoList, index int) (TodoList, error) {
+func (ptr *TodoList) DeleteItem(index int) error {
+	list := *ptr
+
 	if index < 0 || index > len(list) {
-		return list, errors.New("index out of range")
+		return errors.New("index out of range")
 	}
 
 	list = append(list[:index], list[index+1:]...)
 
-	return list, nil
+	return nil
 }
 
-func updateItem(list TodoList, index int, content string) (TodoList, error) {
+func (ptr *TodoList) updateItem(index int, content string) error {
+	list := *ptr
+
 	if index < 0 || index > len(list) {
-		return list, errors.New("index out of range")
+		return errors.New("index out of range")
 	}
 
 	list[index].goal = content
 
-	return list, nil
+	return nil
 }
 
 //func listAll() TodoList {
 //	return listAll()
 //}
 
-func ReadFromFile(list TodoList, fileName string) (TodoList, error) {
+func (ptr *TodoList) ReadFromFile(fileName string) error {
 
 	content, err := os.ReadFile(fileName)
 
 	if err != nil {
-		return list, errors.New("read file error")
+		return errors.New("read file error")
 	}
 
 	if fileName == "" {
-		return nil, errors.New("file name is empty")
+		return errors.New("file name is empty")
 	}
 
 	if len(content) == 0 {
-		return nil, errors.New("file is empty")
+		return errors.New("file is empty")
 	}
 
 	// Unmarshal the JSON data into the todoList variable
-	err = json.Unmarshal(content, &list)
+	err = json.Unmarshal(content, ptr)
 	if err != nil {
-		return nil, errors.New("parsing file error")
+		return errors.New("parsing file error")
 	}
 
-	return list, nil
+	return nil
 
 }
 
-func WriteToFile(list TodoList, fileName string) error {
+func (ptr *TodoList) WriteToFile(fileName string) error {
 	if fileName == "" {
 		return errors.New("file name is empty")
 	}
@@ -104,7 +113,7 @@ func WriteToFile(list TodoList, fileName string) error {
 	//defer file.Close()
 
 	// Marshal the todoList into JSON format
-	data, err := json.Marshal(list)
+	data, err := json.Marshal(ptr)
 	if err != nil {
 		return errors.New("marshal error")
 	}
@@ -112,7 +121,7 @@ func WriteToFile(list TodoList, fileName string) error {
 	return os.WriteFile(fileName, data, 8964)
 }
 
-func PrintTable(list TodoList) {
+func (ptr *TodoList) PrintTable() {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
@@ -126,7 +135,7 @@ func PrintTable(list TodoList) {
 
 	var cells [][]*simpletable.Cell
 
-	for idx, item := range list {
+	for idx, item := range *ptr {
 		idx++
 		task := blue(item.goal)
 		done := blue("no")
