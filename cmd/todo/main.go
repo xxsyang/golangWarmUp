@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -16,10 +17,13 @@ const (
 )
 
 func main() {
+
+	fmt.Println("Welcome to use todo list!" + time.Now().String())
 	add := flag.Bool("add", false, "add a new todo")
 	complete := flag.Int("complete", 0, "mark a todo as completed")
 	del := flag.Int("del", 0, "delete a todo")
 	list := flag.Bool("list", false, "list all todo")
+	//modify := flag.Bool("modify", false, "modify a todo")
 
 	flag.Parse()
 
@@ -42,7 +46,7 @@ func main() {
 		}
 
 		todoList.InsertItem(task)
-		fmt.Println("Todo List after insertion:", todoList)
+		fmt.Println("Todo List after insertion:", todoList.PrintListFirst())
 		err = todoList.WriteToFile(storeFile)
 		if err != nil {
 			_, err := fmt.Fprintln(os.Stderr, err.Error())
@@ -89,7 +93,30 @@ func main() {
 		}
 
 	case *list:
+		//todoList.ListAll()
 		todoList.PrintTable()
+
+	//case *modify:
+	//	task, err := getInput(os.Stdin, flag.Args()...)
+	//	if err != nil {
+	//		_, err := fmt.Fprintln(os.Stderr, err.Error())
+	//		if err != nil {
+	//			return
+	//		}
+	//		os.Exit(1)
+	//	}
+	//
+	//	todoList.updateItem(task)
+	//	fmt.Println("Todo List after insertion:", todoList)
+	//	err = todoList.WriteToFile(storeFile)
+	//	if err != nil {
+	//		_, err := fmt.Fprintln(os.Stderr, err.Error())
+	//		if err != nil {
+	//			return
+	//		}
+	//		os.Exit(1)
+	//	}
+
 	default:
 		_, err := fmt.Fprintln(os.Stdout, "invalid command")
 		if err != nil {

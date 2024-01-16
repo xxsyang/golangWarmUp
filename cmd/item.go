@@ -18,17 +18,15 @@ type item struct {
 
 type TodoList []item
 
-//var TodoList []item
-
 func (ptr *TodoList) InsertItem(content string) {
-	*ptr = append(*ptr,
-		item{
-			content,
-			false,
-			time.Now(),
-			"Not finished yet! Do it right now!!!!!!!!!!!!!!"})
+	list := *ptr
 
-	fmt.Println("Todo List add successfully!")
+	*ptr = append(list,
+		item{
+			goal:         content,
+			isDone:       false,
+			createTime:   time.Now(),
+			finishedTime: "Not finished yet! Do it right now!!!!!!!!!!!!!!"})
 }
 
 func (ptr *TodoList) MarkDone(index int) error {
@@ -53,12 +51,12 @@ func (ptr *TodoList) DeleteItem(index int) error {
 		return errors.New("index out of range")
 	}
 
-	list = append(list[:index], list[index+1:]...)
+	*ptr = append(list[:index-1], list[index:]...)
 
 	return nil
 }
 
-func (ptr *TodoList) updateItem(index int, content string) error {
+func (ptr *TodoList) UpdateItem(index int, content string) error {
 	list := *ptr
 
 	if index < 0 || index > len(list) {
@@ -70,9 +68,12 @@ func (ptr *TodoList) updateItem(index int, content string) error {
 	return nil
 }
 
-//func listAll() TodoList {
-//	return listAll()
-//}
+func (ptr *TodoList) PrintListFirst() string {
+	list := *ptr
+
+	return list[0].goal
+
+}
 
 func (ptr *TodoList) ReadFromFile(fileName string) error {
 
@@ -92,6 +93,8 @@ func (ptr *TodoList) ReadFromFile(fileName string) error {
 
 	// Unmarshal the JSON data into the todoList variable
 	err = json.Unmarshal(content, ptr)
+
+	fmt.Println("Todo List after insertion:", ptr)
 	if err != nil {
 		return errors.New("parsing file error")
 	}
@@ -113,12 +116,29 @@ func (ptr *TodoList) WriteToFile(fileName string) error {
 	//defer file.Close()
 
 	// Marshal the todoList into JSON format
-	data, err := json.Marshal(ptr)
+	data, err := json.MarshalIndent(ptr, "", " ")
 	if err != nil {
 		return errors.New("marshal error")
 	}
 
-	return os.WriteFile(fileName, data, 8964)
+	err = os.WriteFile(fileName, data, 0666)
+
+	if err != nil {
+		return errors.New("write file error")
+	}
+
+	return nil
+
+}
+
+func (ptr *TodoList) CountPending() int {
+	total := 0
+	for _, item := range *ptr {
+		if !item.isDone {
+			total++
+		}
+	}
+	return total
 }
 
 func (ptr *TodoList) PrintTable() {
@@ -137,8 +157,8 @@ func (ptr *TodoList) PrintTable() {
 
 	for idx, item := range *ptr {
 		idx++
-		task := blue(item.goal)
-		done := blue("no")
+		task := cyan(item.goal)
+		done := red("no")
 		if item.isDone {
 			task = green(fmt.Sprintf("\u2705 %s", item.goal))
 			done = green("yes")
@@ -147,12 +167,16 @@ func (ptr *TodoList) PrintTable() {
 			{Text: fmt.Sprintf("%d", idx)},
 			{Text: task},
 			{Text: done},
-			{Text: item.createTime.Format(time.RFC822)},
-			{Text: item.finishedTime},
+			{Text: fmt.Sprintf(red(item.createTime.String()))},
+			{Text: fmt.Sprintf(item.finishedTime)},
 		})
 	}
 
 	table.Body = &simpletable.Body{Cells: cells}
+
+	table.Footer = &simpletable.Footer{Cells: []*simpletable.Cell{
+		{Align: simpletable.AlignCenter, Span: 5, Text: red(fmt.Sprintf("You have %d pending todos", ptr.CountPending()))},
+	}}
 
 	table.SetStyle(simpletable.StyleUnicode)
 
